@@ -50,23 +50,26 @@ module.exports = async (req, res) => {
         // Gemini APIで返答生成
         let aiResponse;
         try {
+          console.log('GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+          console.log('GEMINI_API_KEY starts with AIza:', process.env.GEMINI_API_KEY?.startsWith('AIza'));
+          
           const { GoogleGenerativeAI } = require('@google/generative-ai');
           const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-          const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-          const SYSTEM_PROMPT = `あなたの名前はhappychanです。フレンドリーで親しみやすく、セキュリティと食べ物に詳しいAIアシスタントです。短めで楽しい返答をしてください。`;
-          
           if (!message) {
             aiResponse = "はーい！何か聞きたいことある？😊";
           } else {
-            const prompt = `${SYSTEM_PROMPT}\n\nユーザー: ${message}\nhappychan:`;
-            const result = await model.generateContent(prompt);
+            // シンプルなテスト
+            const result = await model.generateContent("こんにちはと日本語で返答して");
             const response = await result.response;
             aiResponse = response.text();
           }
+          
+          console.log('Gemini response success:', aiResponse);
         } catch (error) {
-          console.error('Gemini API error:', error);
-          aiResponse = "すみません、ちょっと調子悪いみたいです😅";
+          console.error('Gemini API error details:', error.message, error.stack);
+          aiResponse = `すみません、エラーです😅 (${error.message})`;
         }
 
         // Slackに返答投稿
