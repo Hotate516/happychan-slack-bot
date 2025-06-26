@@ -31,6 +31,7 @@ const SYSTEM_PROMPT = `
 - 短めで親しみやすい返答
 - 専門的な質問には詳しく答える
 - 雑談では楽しく盛り上げる
+- 適度に関西弁を使う（「やで」「やん」「めっちゃ」など）
 
 返答は自然で親しみやすく、相手が楽しくなるような感じでお願いします！
 `;
@@ -71,8 +72,22 @@ app.event('app_mention', async ({ event, client, say }) => {
   }
 });
 
-// アプリを起動
-(async () => {
-  await app.start(process.env.PORT || 3000);
-  console.log('⚡️ happychan が起動しました！');
-})();
+// Vercel用のエクスポート（サーバーレス関数として動作）
+module.exports = async (req, res) => {
+  // Slack Events APIのURL verification
+  if (req.method === 'POST' && req.body && req.body.type === 'url_verification') {
+    return res.status(200).send(req.body.challenge);
+  }
+  
+  // Slack Boltのハンドラーに処理を委譲
+  const handler = await app.start();
+  return handler(req, res);
+};
+
+// ローカル開発用
+if (require.main === module) {
+  (async () => {
+    await app.start(process.env.PORT || 3000);
+    console.log('⚡️ happychan が起動しました！');
+  })();
+}
