@@ -163,7 +163,7 @@ MIT License
 
 ## 作成者
 
-幸松豊拓
+Hotaku Komatsu
 
 ---
 

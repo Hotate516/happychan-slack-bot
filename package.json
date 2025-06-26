@@ -1,4 +1,13 @@
 {
+  "name": "happychan-slack-bot",
+  "version": "1.0.0",
+  "description": "Friendly AI chatbot for Slack with security and food expertise",
+  "license": "MIT",
+  "author": "HotakuKomatsu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hotate516/happychan-slack-bot.git"
+  },
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
@@ -8,3 +17,4 @@
     "node-fetch": "^2.7.0"
   }
 }
+
