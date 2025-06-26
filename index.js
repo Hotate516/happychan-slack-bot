@@ -6,6 +6,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET,
+  processBeforeResponse: true
 });
 
 // Gemini AI の初期化
@@ -31,7 +32,6 @@ const SYSTEM_PROMPT = `
 - 短めで親しみやすい返答
 - 専門的な質問には詳しく答える
 - 雑談では楽しく盛り上げる
-- 適度に関西弁を使う（「やで」「やん」「めっちゃ」など）
 
 返答は自然で親しみやすく、相手が楽しくなるような感じでお願いします！
 `;
@@ -72,16 +72,39 @@ app.event('app_mention', async ({ event, client, say }) => {
   }
 });
 
-// Vercel用のエクスポート（サーバーレス関数として動作）
+// Vercel用のサーバーレス関数エクスポート
 module.exports = async (req, res) => {
-  // Slack Events APIのURL verification
-  if (req.method === 'POST' && req.body && req.body.type === 'url_verification') {
-    return res.status(200).send(req.body.challenge);
-  }
+  // CORS設定
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  // Slack Boltのハンドラーに処理を委譲
-  const handler = await app.start();
-  return handler(req, res);
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Slack Events APIのURL verification
+  if (req.method === 'POST') {
+    const body = req.body;
+    
+    // URL verification challenge
+    if (body && body.type === 'url_verification') {
+      console.log('URL verification challenge received:', body.challenge);
+      return res.status(200).json({ challenge: body.challenge });
+    }
+    
+    // Slack Boltアプリでイベントを処理
+    try {
+      const slackReceiver = app.receiver;
+      await slackReceiver.requestHandler(req, res);
+    } catch (error) {
+      console.error('Slack処理エラー:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  } else {
+    // GET request - ヘルスチェック
+    return res.status(200).json({ status: 'happychan is running!' });
+  }
 };
 
 // ローカル開発用
